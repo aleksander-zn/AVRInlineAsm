@@ -27,3 +27,13 @@ This approach has the following implications:
 *   similary, if you place an `asm` statement inside a loop where it is always
     'called' with the same input operands, the compiler will likely move that
     code before (or after) the loop.
+
+To tell the compiler that the result of executing your `asm` code depends on
+something that is not listed as a input operand (e.g. state of a
+microcontroller's pin) or on the other hand, that results may vary even if
+input operands doesn't change, you should use the `volatile` keyword.
+
+This is also the case when your `asm` statement has some side effects (e.g it
+changes state of a pin, writes to some SFR).
+
+Any statement that has no output operands is *implicitly volatile*.
