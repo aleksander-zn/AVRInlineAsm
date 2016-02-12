@@ -15,3 +15,15 @@ How Is Inline Assembly Seen by the Compiler?
 
 Whenever you use inline assembly the compiler threats it as a kind of blackbox
 that takes some data, processes it and produces some output.
+
+This approach has the following implications:
+
+*   it is rather unlikely that the compiler will change anything within an `asm`
+    statement as it doesn't even check whether the code assembles correctly;
+
+*   however, if you do not use any of the output operands, the compiler is
+    allowed to remove your `asm` code entirely;
+
+*   similary, if you place an `asm` statement inside a loop where it is always
+    'called' with the same input operands, the compiler will likely move that
+    code before (or after) the loop.
