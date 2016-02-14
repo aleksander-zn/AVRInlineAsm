@@ -1,4 +1,4 @@
-	.file	"volatility.c"
+	.file	"01-volatility.c"
 __SP_H__ = 0x3e
 __SP_L__ = 0x3d
 __SREG__ = 0x3f
@@ -15,7 +15,7 @@ _80spaces:
 	ldi r25,lo8(80)
 	ldi r24,lo8(32)
 /* #APP */
- ;  9 "volatility.c" 1
+ ;  14 "01-volatility.c" 1
 	1:
 	sbis 11, 5
 	rjmp 1b
