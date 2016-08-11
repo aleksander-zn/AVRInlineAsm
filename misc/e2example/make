@@ -1,0 +1,4 @@
+#!/bin/bash -x
+avr-gcc -mmcu=atmega328p -Os -Wall -g e2example.c -o e2example.elf
+avr-objdump -xd e2example.elf > e2example.lst
+avr-objdump -s -j .eeprom e2example.elf >> e2example.lst
