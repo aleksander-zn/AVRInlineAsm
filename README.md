@@ -30,8 +30,8 @@ This approach has the following implications:
 
 To tell the compiler that the result of executing your `asm` code depends on
 something that is not listed as an input operand (e.g. the state of a
-microcontroller's pin) or on the other hand, that results may vary even if
-the input operands do not change, you should use the `volatile` keyword.
+microcontroller's pin) or on the other hand, that results may vary even if the
+input operands do not change, you should use the `volatile` keyword.
 
 This is also the case when your `asm` statement has some side effects (e.g it
 changes the state of a pin, writes to some SFR).
