@@ -1,0 +1,157 @@
+
+01.o:     file format elf32-avr
+01.o
+architecture: avr:5, flags 0x00000011:
+HAS_RELOC, HAS_SYMS
+start address 0x00000000
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         0000008a  00000000  00000000  00000034  2**0
+                  CONTENTS, ALLOC, LOAD, RELOC, READONLY, CODE
+  1 .data         00000000  00000000  00000000  000000be  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          00000000  00000000  00000000  000000be  2**0
+                  ALLOC
+  3 .stab         00000618  00000000  00000000  000000c0  2**2
+                  CONTENTS, RELOC, READONLY, DEBUGGING
+  4 .stabstr      00000cd3  00000000  00000000  000006d8  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  5 .comment      00000012  00000000  00000000  000013ab  2**0
+                  CONTENTS, READONLY
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 01.c
+00000000 l    d  .text	00000000 .text
+00000000 l    d  .data	00000000 .data
+00000000 l    d  .bss	00000000 .bss
+0000003e l       *ABS*	00000000 __SP_H__
+0000003d l       *ABS*	00000000 __SP_L__
+0000003f l       *ABS*	00000000 __SREG__
+00000000 l       *ABS*	00000000 __tmp_reg__
+00000001 l       *ABS*	00000000 __zero_reg__
+00000000 l     F .text	00000012 do_spm
+00000000 l    d  .stab	00000000 .stab
+00000000 l    d  .stabstr	00000000 .stabstr
+00000000 l    d  .comment	00000000 .comment
+00000012 g     F .text	00000078 erase_and_write_a_page
+
+
+
+Disassembly of section .text:
+
+00000000 <do_spm>:
+static void do_spm(uint8_t op, uint16_t r0r1, uint16_t z)
+{
+	//op |= _BV(SPMEN);
+	
+	// wait for ongoing page erase/write to finish
+	while ((SPMCSR & _BV(SPMEN)) != 0);
+   0:	07 b6       	in	r0, 0x37	; 55
+   2:	00 fc       	sbrc	r0, 0
+   4:	00 c0       	rjmp	.+0      	; 0x6 <do_spm+0x6>
+			4: R_AVR_13_PCREL	.text
+	
+	// rigth shift operation (>>) could possibly override r0
+	// just to be on the safe side assing a value to r1 first
+	register uint8_t r1 asm ("r1") = r0r1 >> 8;
+	register uint8_t r0 asm ("r0") = r0r1;
+   6:	0b 01       	movw	r0, r22
+	asm volatile
+   8:	fa 01       	movw	r30, r20
+   a:	87 bf       	out	0x37, r24	; 55
+   c:	e8 95       	spm
+   e:	11 24       	eor	r1, r1
+  10:	08 95       	ret
+
+00000012 <erase_and_write_a_page>:
+#define EEWE EEPE
+#endif
+
+// disable interrupt before calling this function
+void erase_and_write_a_page(uint16_t addr, uint8_t *buf)
+{
+  12:	df 92       	push	r13
+  14:	ef 92       	push	r14
+  16:	ff 92       	push	r15
+  18:	0f 93       	push	r16
+  1a:	1f 93       	push	r17
+  1c:	cf 93       	push	r28
+  1e:	df 93       	push	r29
+  20:	8c 01       	movw	r16, r24
+  22:	7b 01       	movw	r14, r22
+  24:	f8 99       	sbic	0x1f, 0	; 31
+  26:	00 c0       	rjmp	.+0      	; 0x28 <erase_and_write_a_page+0x16>
+			26: R_AVR_13_PCREL	.text+0x24
+  28:	a8 01       	movw	r20, r16
+  2a:	60 e0       	ldi	r22, 0x00	; 0
+  2c:	70 e0       	ldi	r23, 0x00	; 0
+  2e:	83 e0       	ldi	r24, 0x03	; 3
+  30:	0e 94 00 00 	call	0	; 0x0 <do_spm>
+			30: R_AVR_CALL	.text
+  34:	e7 01       	movw	r28, r14
+	// wait for the ongoing EEPROM write to finish
+	while ((EECR & EEWE) != 0);
+  36:	d1 2c       	mov	r13, r1
+  38:	78 01       	movw	r14, r16
+	
+	boot_page_erase(addr);
+  3a:	ec 1a       	sub	r14, r28
+  3c:	fd 0a       	sbc	r15, r29
+  3e:	a7 01       	movw	r20, r14
+  40:	4c 0f       	add	r20, r28
+  42:	5d 1f       	adc	r21, r29
+  44:	69 81       	ldd	r22, Y+1	; 0x01
+  46:	70 e0       	ldi	r23, 0x00	; 0
+	#if SPM_PAGESIZE <= UINT8_MAX
+	uint8_t i;
+	#else
+	uint16_t i;
+	#endif
+	for (i = 0; i < SPM_PAGESIZE; i += 2)
+  48:	76 2f       	mov	r23, r22
+		uint16_t w = buf[i] | (buf[i + 1] << 8);
+		/*
+		uint16_t w = *buf++;
+		w |= (*buf++) << 8;
+		*/
+		boot_page_fill(addr + i, w);
+  4a:	66 27       	eor	r22, r22
+  4c:	88 81       	ld	r24, Y
+  4e:	68 2b       	or	r22, r24
+  50:	81 e0       	ldi	r24, 0x01	; 1
+  52:	0e 94 00 00 	call	0	; 0x0 <do_spm>
+			52: R_AVR_CALL	.text
+  56:	d3 94       	inc	r13
+  58:	d3 94       	inc	r13
+  5a:	22 96       	adiw	r28, 0x02	; 2
+  5c:	80 e8       	ldi	r24, 0x80	; 128
+  5e:	d8 12       	cpse	r13, r24
+  60:	00 c0       	rjmp	.+0      	; 0x62 <erase_and_write_a_page+0x50>
+			60: R_AVR_13_PCREL	.text+0x3e
+  62:	a8 01       	movw	r20, r16
+  64:	60 e0       	ldi	r22, 0x00	; 0
+  66:	70 e0       	ldi	r23, 0x00	; 0
+	for (i = 0; i < SPM_PAGESIZE; i += 2)
+  68:	85 e0       	ldi	r24, 0x05	; 5
+  6a:	0e 94 00 00 	call	0	; 0x0 <do_spm>
+			6a: R_AVR_CALL	.text
+  6e:	40 e0       	ldi	r20, 0x00	; 0
+  70:	50 e0       	ldi	r21, 0x00	; 0
+  72:	60 e0       	ldi	r22, 0x00	; 0
+	}
+	
+	boot_page_write(addr);
+  74:	70 e0       	ldi	r23, 0x00	; 0
+  76:	81 e1       	ldi	r24, 0x11	; 17
+  78:	df 91       	pop	r29
+  7a:	cf 91       	pop	r28
+  7c:	1f 91       	pop	r17
+  7e:	0f 91       	pop	r16
+	boot_spm_busy_wait();
+	
+	boot_rww_enable();
+  80:	ff 90       	pop	r15
+  82:	ef 90       	pop	r14
+  84:	df 90       	pop	r13
+  86:	0c 94 00 00 	jmp	0	; 0x0 <do_spm>
+			86: R_AVR_CALL	.text
