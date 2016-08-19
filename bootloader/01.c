@@ -37,13 +37,13 @@ static void do_spm(uint8_t op, uint16_t r0r1, uint16_t z)
 	register uint8_t r0 asm ("r0") = r0r1;
 	asm volatile
 	(
-	 	#pragma push_macro("_SFR_IO8")
-	 	#pragma push_macro("_SFR_MEM8")
-	 	#undef _SFR_IO8
-	 	#undef _SFR_MEM8
-	 	#define _SFR_IO8(addr) 1
-	 	#define _SFR_MEM8(addr) 0
-	 	#if SPMCSR
+		#pragma push_macro("_SFR_IO8")
+		#pragma push_macro("_SFR_MEM8")
+		#undef _SFR_IO8
+		#undef _SFR_MEM8
+		#define _SFR_IO8(addr) 1
+		#define _SFR_MEM8(addr) 0
+		#if SPMCSR
 		"out %[spmcsr], %[op]\n\t"
 		#else
 		"sts %[spmcsr], %[op]\n\t"
@@ -57,11 +57,11 @@ static void do_spm(uint8_t op, uint16_t r0r1, uint16_t z)
 		: [r1]		"+r"	(r1)
 		#if SPMCSR
 		#pragma pop_macro("_SFR_IO8")
-	 	#pragma pop_macro("_SFR_MEM8")
+		#pragma pop_macro("_SFR_MEM8")
 		: [spmcsr]	"I"	(_SFR_IO_ADDR(SPMCSR)),
 		#else
 		#pragma pop_macro("_SFR_IO8")
-	 	#pragma pop_macro("_SFR_MEM8")
+		#pragma pop_macro("_SFR_MEM8")
 		: [spmcsr]	"i"	(_SFR_MEM_ADDR(SPMCSR)),
 		#endif
 		  [op]		"r"	(op),
@@ -69,6 +69,7 @@ static void do_spm(uint8_t op, uint16_t r0r1, uint16_t z)
 		//		"r"	(r1),
 				"z"	(z)
 	);
+	// this line is here only to show that we have to clear r1 in the asm statement
 	r1 = 5;
 }
 
